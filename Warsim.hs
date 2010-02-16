@@ -1,48 +1,57 @@
-data Stats = {
-  weaponSkill       :: Int,
-  ballisticSkill    :: Int,
-  strength          :: Int,
-  toughness         :: Int,
-  willpower         :: Int,
-  intelligence      :: Int,
-  armory            :: Int,
-  leadership        :: Int,
-  saves             :: Int,
-  invulnerableSaves :: Int
-}
-
-data WeaponType = Heavy | RapidFire | Assault 
-                  deriving (Show, Eq, Bounded)
-
-data Weapon = {
-  name              :: String,
-  weaponType        :: WeaponType,
-  numAttacks        :: Int,
-  strength          :: Int,
-  armorPen          :: Int,
-  range             :: Int,
-  twinLinked        :: Bool
-}
-
-data Model = {
-  stats :: Stats,
-  weapons :: [Weapon]
+data Stats = Stats {
+  statWeaponSkill       :: Int,
+  statBallisticSkill    :: Int,
+  statStrength          :: Int,
+  statToughness         :: Int,
+  statWillpower         :: Int,
+  statIntelligence      :: Int,
+  statArmory            :: Int,
+  statLeadership        :: Int,
+  statSaves             :: Int,
+  statInvulnerableSaves :: Int
 } deriving (Show)
 
-data Unit = {
-  models :: [Model],
-  name :: String
+data WeaponType = Heavy | RapidFire | Assault deriving (Show, Eq)
+
+data Weapon = Weapon {
+  weaponName         :: String,
+  weaponType         :: WeaponType,
+  weaponAttacks      :: Int,
+  weaponStrength     :: Int,
+  weaponArmorPen     :: Int,
+  weaponRange        :: Int,
+  weaponIsTwinLinked :: Bool
 } deriving (Show)
 
-defaultRange = 72
+data Model = Model {
+  modelStats   :: Stats,
+  modelWeapons :: [Weapon],
+  modelName    :: String
+} deriving (Show)
+
+data Unit = Unit {
+  unitModels  :: [Model],
+  unitName    :: String
+} deriving (Show)
+
+class Named a where
+  name :: a -> String
+
+instance Named Unit where
+  name = unitName
+
+instance Named Weapon where
+  name = weaponName
+
+instance Named Model where
+  name = modelName
 
 --
 -- Tau armory
 --
-railgun = Weapon "Railgun" Heavy 1 10 1 defRange True
+railgun = Weapon "Railgun" Heavy 1 10 1 72 True
 smartMissileSystem = Weapon "Smart Missile System" Heavy 4 5 5 24 False
 plasmaRifle = Weapon "Plasma Rifle" RapidFire 2 6 2 24 True
 burstCannon = Weapon "Burst Cannon" Assault 3 5 5 18 False
 pulseRifle = Weapon "Pulse Rifle" RapidFire 2 5 5 30 False
-
 
