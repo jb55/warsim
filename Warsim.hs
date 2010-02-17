@@ -1,3 +1,6 @@
+import System.Random
+import Control.Monad.Random
+
 data Stats = Stats {
   statWeaponSkill       :: Int,
   statBallisticSkill    :: Int,
@@ -46,6 +49,18 @@ instance Named Weapon where
 instance Named Model where
   name = modelName
 
+rand :: (Random a, RandomGen g) => a -> a -> Rand g [a]
+rand x y = getRandomRs (x, y)
+ 
+die :: (RandomGen g) => Rand g Int
+die = getRandomR (1,6)
+
+dice :: (RandomGen g) => Int -> Rand g [Int]
+dice n = sequence $ replicate n die
+
+rollDie = evalRandIO die
+rollDice n = evalRandIO $ dice n
+
 --
 -- Tau armory
 --
@@ -54,4 +69,3 @@ smartMissileSystem = Weapon "Smart Missile System" Heavy 4 5 5 24 False
 plasmaRifle = Weapon "Plasma Rifle" RapidFire 2 6 2 24 True
 burstCannon = Weapon "Burst Cannon" Assault 3 5 5 18 False
 pulseRifle = Weapon "Pulse Rifle" RapidFire 2 5 5 30 False
-
