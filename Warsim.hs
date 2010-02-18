@@ -1,17 +1,22 @@
 import qualified Numeric.Probability.Distribution as Dist
-import Numeric.Probability.Distribution ((??),)
+import Numeric.Probability.Distribution ((??),(?=<<),)
 import Control.Monad
 
 type Die = Int
 type Probability = Rational
 type Dist = Dist.T Probability
 
-die :: Dist Die
-die = Dist.uniform [1..6]
+die :: Die -> Dist Die
+die n = Dist.uniform [1..n]
+
+d6 :: Dist Die
+d6 = die 6
+
+type BallisticSkill = Int
 
 data Stats = Stats {
   weaponSkill       :: Int,
-  ballisticSkill    :: Int,
+  ballisticSkill    :: BallisticSkill,
   strength          :: Int,
   toughness         :: Int,
   willpower         :: Int,
@@ -57,11 +62,13 @@ instance Named Weapon where
 instance Named Model where
   name = modelName
 
-hits :: Model -> Int
-hits m = round hitProb
-         where attacks = weaponAttacks $ head $ modelWeapons m
-               toHit = 7 - (ballisticSkill $ modelStats m)
-               hitProb = 1
+hits :: Weapon -> BallisticSkill -> Probability
+hits w bs = (hitProb * attacks) + (rerolledHitProb * bs)
+  where attacks = toRational $ weaponAttacks w
+        toHit = 7 - bs
+        missProb = (>= toHit) ?? d6
+        hitProb = (< toHit) ?? d6
+        rerolledHitProb = if weaponIsTwinLinked w then hitProb else 0
 
 wounds :: Model -> Model -> Int
 wounds = undefined
@@ -71,7 +78,7 @@ invSave = 7
 --
 -- Tau armory
 --
-railgun = Weapon "Railgun" Heavy 1 10 1 72 True
+railgun = Weapon "Railgun" Heavy 1 10 1 72 False
 smartMissileSystem = Weapon "Smart Missile System" Heavy 4 5 5 24 False
 plasmaRifle = Weapon "Plasma Rifle" RapidFire 2 6 2 24 True
 burstCannon = Weapon "Burst Cannon" Assault 3 5 5 18 False
