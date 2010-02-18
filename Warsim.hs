@@ -61,14 +61,21 @@ instance Named Weapon where
 
 instance Named Model where
   name = modelName
+ 
+limit :: (Ord a) => a -> a -> a
+limit a b
+  | b > a     = a
+  | otherwise = b
+
 
 hits :: Weapon -> BallisticSkill -> Probability
-hits w bs = (hitProb * attacks) + (rerolledHitProb * bs)
+hits w bs = limit attacks $ (hitProb * attacks) + rerolledMisses
   where attacks = toRational $ weaponAttacks w
         toHit = 7 - bs
-        missProb = (>= toHit) ?? d6
+        numMissed = toRational bs
         hitProb = (< toHit) ?? d6
         rerolledHitProb = if weaponIsTwinLinked w then hitProb else 0
+        rerolledMisses = rerolledHitProb * numMissed
 
 wounds :: Model -> Model -> Int
 wounds = undefined
@@ -78,7 +85,7 @@ invSave = 7
 --
 -- Tau armory
 --
-railgun = Weapon "Railgun" Heavy 1 10 1 72 False
+railgun = Weapon "Railgun" Heavy 1 10 1 72 True
 smartMissileSystem = Weapon "Smart Missile System" Heavy 4 5 5 24 False
 plasmaRifle = Weapon "Plasma Rifle" RapidFire 2 6 2 24 True
 burstCannon = Weapon "Burst Cannon" Assault 3 5 5 18 False
