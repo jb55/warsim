@@ -1,17 +1,25 @@
-import System.Random
-import Control.Monad.Random
+import qualified Numeric.Probability.Distribution as Dist
+import Numeric.Probability.Distribution ((??),)
+import Control.Monad
+
+type Die = Int
+type Probability = Rational
+type Dist = Dist.T Probability
+
+die :: Dist Die
+die = Dist.uniform [1..6]
 
 data Stats = Stats {
-  statWeaponSkill       :: Int,
-  statBallisticSkill    :: Int,
-  statStrength          :: Int,
-  statToughness         :: Int,
-  statWillpower         :: Int,
-  statIntelligence      :: Int,
-  statArmory            :: Int,
-  statLeadership        :: Int,
-  statSaves             :: Int,
-  statInvulnerableSaves :: Int
+  weaponSkill       :: Int,
+  ballisticSkill    :: Int,
+  strength          :: Int,
+  toughness         :: Int,
+  willpower         :: Int,
+  intelligence      :: Int,
+  armory            :: Int,
+  leadership        :: Int,
+  saves             :: Int,
+  invulnerableSaves :: Int
 } deriving (Show)
 
 data WeaponType = Heavy | RapidFire | Assault deriving (Show, Eq)
@@ -49,17 +57,16 @@ instance Named Weapon where
 instance Named Model where
   name = modelName
 
-rand :: (Random a, RandomGen g) => a -> a -> Rand g [a]
-rand x y = getRandomRs (x, y)
- 
-die :: (RandomGen g) => Rand g Int
-die = getRandomR (1,6)
+hits :: Model -> Int
+hits m = round hitProb
+         where attacks = weaponAttacks $ head $ modelWeapons m
+               toHit = 7 - (ballisticSkill $ modelStats m)
+               hitProb = 1
 
-dice :: (RandomGen g) => Int -> Rand g [Int]
-dice n = sequence $ replicate n die
+wounds :: Model -> Model -> Int
+wounds = undefined
 
-rollDie = evalRandIO die
-rollDice n = evalRandIO $ dice n
+invSave = 7
 
 --
 -- Tau armory
@@ -69,3 +76,5 @@ smartMissileSystem = Weapon "Smart Missile System" Heavy 4 5 5 24 False
 plasmaRifle = Weapon "Plasma Rifle" RapidFire 2 6 2 24 True
 burstCannon = Weapon "Burst Cannon" Assault 3 5 5 18 False
 pulseRifle = Weapon "Pulse Rifle" RapidFire 2 5 5 30 False
+
+fireWarrior = Model (Stats 2 3 3 3 1 2 1 7 4 7) [pulseRifle] "Fire Warrior"
