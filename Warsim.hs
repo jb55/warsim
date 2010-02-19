@@ -12,13 +12,17 @@ die n = Dist.uniform [1..n]
 d6 :: Dist Die
 d6 = die 6
 
-type BallisticSkill = Int
+type StatType = Int
+
+type BallisticSkill = StatType
+type Strength = StatType
+type Toughness = StatType
 
 data Stats = Stats {
   weaponSkill       :: Int,
   ballisticSkill    :: BallisticSkill,
-  strength          :: Int,
-  toughness         :: Int,
+  strength          :: Strength,
+  toughness         :: Toughness,
   willpower         :: Int,
   intelligence      :: Int,
   armory            :: Int,
@@ -67,18 +71,28 @@ limit a b
   | b > a     = a
   | otherwise = b
 
-
 hits :: Weapon -> BallisticSkill -> Probability
-hits w bs = limit attacks $ (hitProb * attacks) + rerolledMisses
+hits w bs = 
+  limit attacks $ (hitProb * attacks) + rerolledMisses
   where attacks = toRational $ weaponAttacks w
         toHit = 7 - bs
+        hitProb = (>= toHit) ?? d6
         numMissed = toRational bs
-        hitProb = (< toHit) ?? d6
         rerolledHitProb = if weaponIsTwinLinked w then hitProb else 0
         rerolledMisses = rerolledHitProb * numMissed
 
-wounds :: Model -> Model -> Int
-wounds = undefined
+wounds :: Toughness -> Strength -> Probability -> Probability
+wounds t s p = undefined
+  
+
+toWound :: Toughness -> Strength -> Int
+toWound t s
+  | val < 2 = 2
+  | val == 7 = 6
+  | val == 8 = 7
+  | otherwise = val
+  where val = (t - s) + 4
+
 
 invSave = 7
 
