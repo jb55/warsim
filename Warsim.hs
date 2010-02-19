@@ -79,7 +79,7 @@ limit a b
 
 hits :: Weapon -> BallisticSkill -> Probability
 hits w bs = 
-  limit attacks $ (totalHitProb + totalRerollProb) - overlap
+  limit attacks $ (totalHitProb + totalRerollProb)
   where 
     attacks         = toRational $ weaponAttacks w
     toHit           = 7 - bs
@@ -88,7 +88,6 @@ hits w bs =
     rerolledHitProb = if weaponIsTwinLinked w then hitProb else 0
     totalHitProb    = hitProb * attacks
     totalRerollProb = rerolledHitProb * numMissed
-    overlap         = totalHitProb * totalRerollProb
 
 
 -- Toughness: toughness of defending model
