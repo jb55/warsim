@@ -17,6 +17,9 @@ type StatType = Int
 type BallisticSkill = StatType
 type Strength = StatType
 type Toughness = StatType
+type Saves = StatType
+type ArmorPen = StatType
+type InvSaves = StatType
 
 data WeaponType = Heavy | RapidFire | Assault deriving (Show, Eq)
 
@@ -25,7 +28,7 @@ data Weapon = Weapon {
   weaponType         :: WeaponType,
   weaponAttacks      :: Int,
   weaponStrength     :: Int,
-  weaponArmorPen     :: Int,
+  weaponArmorPen     :: ArmorPen,
   weaponRange        :: Int,
   weaponIsTwinLinked :: Bool
 } deriving (Show)
@@ -48,8 +51,8 @@ data Model = Model {
   intelligence      :: Int,
   armory            :: Int,
   leadership        :: Int,
-  saves             :: Int,
-  invulnerableSaves :: Int
+  saves             :: Saves,
+  invSaves          :: InvSaves
 } deriving (Show)
 
 data Unit = Unit {
@@ -92,13 +95,24 @@ hits w bs = hitProb + (rerolledHitProb * hitProb)
 wounds :: Toughness -> Strength -> Probability -> Probability
 wounds t s p = (d6Prob $ toWound t s) * p
 
+-- Params:
+--  Probability: wound probability
+saved :: ArmorPen -> Saves -> InvSaves -> Probability -> Probability
+saved ap s is wp = (1 - saveProb) * wp
+  where
+    doesPen = ap <= s
+    saveProb = if doesPen then d6Prob is else d6Prob $ min is s
+
 battleModels' :: Model -> Model -> Probability
 battleModels' a d = battleModels a d (head $ modelWeapons a)
 
 battleModels :: Model -> Model -> Weapon -> Probability
-battleModels a d w = wp
+battleModels a d w = wp --saved ap sv isv wp
   where
+    ap = weaponArmorPen w
     t = toughness d
+    sv = saves d
+    isv = invSaves d
     s = strength a
     hp = hits w (ballisticSkill a)
     wp = wounds t s hp
