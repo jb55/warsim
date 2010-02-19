@@ -18,19 +18,6 @@ type BallisticSkill = StatType
 type Strength = StatType
 type Toughness = StatType
 
-data Stats = Stats {
-  weaponSkill       :: Int,
-  ballisticSkill    :: BallisticSkill,
-  strength          :: Strength,
-  toughness         :: Toughness,
-  willpower         :: Int,
-  intelligence      :: Int,
-  armory            :: Int,
-  leadership        :: Int,
-  saves             :: Int,
-  invulnerableSaves :: Int
-} deriving (Show)
-
 data WeaponType = Heavy | RapidFire | Assault deriving (Show, Eq)
 
 data Weapon = Weapon {
@@ -43,10 +30,26 @@ data Weapon = Weapon {
   weaponIsTwinLinked :: Bool
 } deriving (Show)
 
+data Result = Result {
+  resultWounds       :: Probability,
+  resultHits         :: Probability,
+  resultSaves        :: Probability,
+  resultKills        :: Probability
+}
+
 data Model = Model {
-  modelStats   :: Stats,
-  modelWeapons :: [Weapon],
-  modelName    :: String
+  modelWeapons      :: [Weapon],
+  modelName         :: String,
+  weaponSkill       :: Int,
+  ballisticSkill    :: BallisticSkill,
+  strength          :: Strength,
+  toughness         :: Toughness,
+  willpower         :: Int,
+  intelligence      :: Int,
+  armory            :: Int,
+  leadership        :: Int,
+  saves             :: Int,
+  invulnerableSaves :: Int
 } deriving (Show)
 
 data Unit = Unit {
@@ -66,6 +69,9 @@ instance Named Weapon where
 instance Named Model where
   name = modelName
  
+d6Prob :: Int -> Probability
+d6Prob toHit = (>= toHit) ?? d6
+
 limit :: (Ord a) => a -> a -> a
 limit a b
   | b > a     = a
@@ -77,17 +83,30 @@ hits w bs =
   where 
     attacks         = toRational $ weaponAttacks w
     toHit           = 7 - bs
-    hitProb         = (>= toHit) ?? d6
+    hitProb         = d6Prob toHit
     numMissed       = toRational bs
     rerolledHitProb = if weaponIsTwinLinked w then hitProb else 0
     totalHitProb    = hitProb * attacks
     totalRerollProb = rerolledHitProb * numMissed
     overlap         = totalHitProb * totalRerollProb
-        
 
+
+-- Toughness: toughness of defending model
+-- Strength: strength of attacking model
+-- Probability: hit probability
 wounds :: Toughness -> Strength -> Probability -> Probability
-wounds t s p = undefined
-  
+wounds t s p = (d6Prob $ toWound t s) * p
+
+battleModels' :: Model -> Model -> Probability
+battleModels' a d = battleModels a d (head $ modelWeapons a)
+
+battleModels :: Model -> Model -> Weapon -> Probability
+battleModels a d w = wp
+  where
+    t = toughness d
+    s = strength a
+    hp = hits w (ballisticSkill a)
+    wp = wounds t s hp
 
 toWound :: Toughness -> Strength -> Int
 toWound t s
@@ -96,7 +115,6 @@ toWound t s
   | val == 8 = 7
   | otherwise = val
   where val = (t - s) + 4
-
 
 invSave = 7
 
@@ -109,4 +127,6 @@ plasmaRifle = Weapon "Plasma Rifle" RapidFire 2 6 2 24 True
 burstCannon = Weapon "Burst Cannon" Assault 3 5 5 18 False
 pulseRifle = Weapon "Pulse Rifle" RapidFire 2 5 5 30 False
 
-fireWarrior = Model (Stats 2 3 3 3 1 2 1 7 4 7) [pulseRifle] "Fire Warrior"
+tauWeapons = [railgun, smartMissileSystem, plasmaRifle, burstCannon, pulseRifle]
+
+fireWarrior = Model [pulseRifle] "Fire Warrior" 2 3 3 3 1 2 1 7 4 7 
