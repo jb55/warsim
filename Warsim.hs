@@ -80,7 +80,6 @@ limit a b
 hits :: Weapon -> BallisticSkill -> Probability
 hits w bs = hitProb + (rerolledHitProb * hitProb)
   where 
-    attacks         = toRational $ weaponAttacks w
     toHit           = 7 - bs
     hitProb         = d6Prob toHit
     missProb        = 1 - hitProb
